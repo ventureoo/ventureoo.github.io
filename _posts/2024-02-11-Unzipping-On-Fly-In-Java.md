@@ -247,16 +247,16 @@ public class AsyncExample {
         Path unzipTo = Paths.get("/home/vasily/unzip");
         URI link = URI.create("https://github.com/ventureoo/ARU/archive/refs/heads/main.zip");
         try {
-            unzipOnFly(link, unzipTo);
-            service.awaitTermination(1L, TimeUnit.MINUTES);
+            unzipOnFly(link, unzipTo).join();
+            service.shutdownNow();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    public static void unzipOnFly(URI url, Path unzipTo) throws InterruptedException {
+    public static CompletableFuture<Void> unzipOnFly(URI url, Path unzipTo) throws InterruptedException {
         HttpRequest request = HttpRequest.newBuilder().uri(url).build();
-        client.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream())
+        return client.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream())
                 .thenApply(response -> response.body())
                 .thenAccept(stream -> {
                     try (ZipInputStream zipInputStream = new ZipInputStream(stream)) {
@@ -281,7 +281,7 @@ public class AsyncExample {
 многопоточности в Java как ``CompletableFuture`` и ``ExecutorService``,
 добавляя каллбэк в ``thenApply`` передавая InputStream вместо HttpResponse и
 каллбэк ``thenAccept`` для получения этого InputStream и распаковки архива. Сам
-метод ``sendAsync`` возвращает нам по сути промис (``Future<Void>``). Хотя в
+метод ``sendAsync`` возвращает нам по сути промис (``CompletableFuture<Void>``). Хотя в
 примере по прежнему создается только один запрос, таким образом можно удобно
 создавать большое количество запросов на одновременную загрузку архивов,
 ограничивая при этом количество одновременно загружаемых архивов через указания
@@ -316,16 +316,16 @@ public class AsyncExample {
         Path unzipTo = Paths.get("/home/vasily/unzip");
         URI link = URI.create("https://github.com/ventureoo/ARU/archive/refs/heads/main.zip");
         try {
-            unzipOnFly(link, unzipTo);
-            service.awaitTermination(1L, TimeUnit.MINUTES);
+            unzipOnFly(link, unzipTo).join();
+            service.shutdownNow();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    public static void unzipOnFly(URI url, Path unzipTo) throws InterruptedException {
+    public static CompletableFuture<Void> unzipOnFly(URI url, Path unzipTo) throws InterruptedException {
         HttpRequest request = HttpRequest.newBuilder().uri(url).build();
-        client.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream())
+        return client.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream())
                 .thenApply(response -> response.body())
                 .thenAccept(stream -> {
                     try (ZipInputStream zipInputStream = new ZipInputStream(stream)) {
